@@ -5,12 +5,23 @@ include(ExternalProject)
 # options
 option(BUILD_TESTS
     "Build test programs form the blosc filter" ON)
-
 option(BUILD_PLUGIN
     "Build dynamically loadable plugin for HDF5 version > 1.8.11" ON)
+option(BUILD_PLUGIN_LOCAL
+    "Build dynamically loadable plugin in ${BLOSC_PREFIX}/lib" OFF)
+
+
+if(BUILD_PLUGIN_LOCAL)
+    set(BUILD_PLUGIN "NO")
+endif(BUILD_PLUGIN_LOCAL)
 if(BUILD_PLUGIN)
     set(PLUGIN_INSTALL_PATH "/usr/local/hdf5/lib/plugin" CACHE PATH 
       "Where to install the dynamic HDF5-plugin")
+else(BUILD_PLUGIN)
+  if(BUILD_PLUGIN_LOCAL)
+        set(PLUGIN_INSTALL_PATH "${CMAKE_INSTALL_PREFIX}/lib" CACHE PATH
+      "Where to install the dynamic HDF5-plugin")
+  endif(BUILD_PLUGIN_LOCAL)
 endif(BUILD_PLUGIN)
 
 set(BLOSC_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/blosc")
@@ -21,6 +32,7 @@ message("BLOSC_PREFIX='${BLOSC_PREFIX}'")
 message("BLOSC_INSTALL_DIR='${BLOSC_INSTALL_DIR}'")
 message("BLOSC_CMAKE_ARGS='${BLOSC_CMAKE_ARGS}'")
 message("GIT_EXECUTABLE='${GIT_EXECUTABLE}'")
+message("PLUGIN_INSTALL_PATH='${PLUGIN_INSTALL_PATH}'")
 
 ExternalProject_Add(project_blosc
   PREFIX ${BLOSC_PREFIX}
@@ -48,6 +60,8 @@ else(MSVC)
     find_package(HDF5 REQUIRED)
 endif(MSVC)
 include_directories(${HDF5_INCLUDE_DIRS})
+message("HDF5_LIBRARIES='${HDF5_LIBRARIES}'")
+message("HDF5_INCLUDE_DIRS='${HDF5_INCLUDE_DIRS}'")
 
 
 # add blosc libraries
@@ -73,7 +87,6 @@ endif(BUILD_PLUGIN)
 # install
 install(FILES src/blosc_filter.h DESTINATION include COMPONENT HDF5_FILTER_DEV)
 install(TARGETS blosc_filter_shared DESTINATION lib COMPONENT HDF5_FILTER_DEV)
-
 
 # test
 message("LINK LIBRARIES='blosc_filter_shared ${HDF5_LIBRARIES}'")
